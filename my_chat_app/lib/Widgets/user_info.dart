@@ -1,14 +1,16 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+//import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:my_chat_app/Models/Daos/single_user_all_convos.dart';
 import 'package:my_chat_app/Models/Daos/user_dao.dart';
 import 'package:my_chat_app/Models/app_user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+//import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:my_chat_app/screens/coversation_list_screen.dart';
+import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
 class UserInfoDetails extends StatefulWidget {
@@ -25,17 +27,22 @@ class _UserInfoDetailsState extends State<UserInfoDetails> {
   bool signingIn = false;
 
   moveAhead(BuildContext context) async{
+
+    print("We are inside move ahead!!");
+
     if(_formKey.currentState!.validate()){
       if(checkImgHolder(context)) {
         final imgUrl = await uploadImageToFirebaseAndReturnUrl(context);
         AppUser appUser = AppUser(userName: uName, uid: FirebaseAuth.instance.currentUser!.uid, imgUrl: imgUrl);
         await UserDao().insertUser(appUser);
+        await Provider.of<SingleUserAllConversations>(context,listen: false).fillList();
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => ConversationsListScreen(
             ),
           ),
         );
+        print("function move ahead ended!");
 
       }
     }
@@ -150,7 +157,9 @@ class _UserInfoDetailsState extends State<UserInfoDetails> {
   Widget build(BuildContext context) {
     return (signingIn)?
         Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: Colors.green,
+          ),
         ):
       ListView(
       children: [
@@ -220,23 +229,23 @@ class _UserInfoDetailsState extends State<UserInfoDetails> {
               SizedBox(height: 10,),
               ElevatedButton(
                   onPressed: ()async{
+                    print("setting state of signingIn to true");
                     setState(() {
                       signingIn = true;
                     });
+                    print("calling move ahead function");
                     await moveAhead(context);
+                    print("setting state of signingIn to false");
                     setState(() {
                       signingIn = false;
                     });
-
-                  },
+                    print("on click function ended");
+                    },
                   child: Text("Lets Go",
 //                  textScaleFactor: 1.5,
                   style: TextStyle(
                   ),
                   ),
-                // style: ElevatedButton.styleFrom(
-                //   padding: EdgeInsets.symmetric(horizontal: 16,vertical: 12)
-                // ),
               )
             ],
           ),

@@ -15,4 +15,9 @@ class UserDao{
     return AppUser.fromMap(doc.data()!);
   }
 
+  Future<bool> userExistOrNot(String userId) async {
+    final doc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    return doc.exists;
+  }
+
 }

@@ -11,45 +11,67 @@ import 'package:provider/provider.dart';
 
 class ChatRoomScreen extends StatelessWidget {
   final AppUser user2;
-  const ChatRoomScreen({required this.user2});
 
+  ChatRoomScreen({required this.user2});
 
+  final List<AppUser> users = [];
+
+  Future<void> fillUsersList() async {
+    final currUser = FirebaseAuth.instance.currentUser;
+    final currAppUser = await UserDao().returnAppUser(currUser!.uid);
+
+    if (currAppUser.uid.compareTo(user2.uid) == -1) {
+//      users = [currAppUser,user2];
+      users.insert(0, currAppUser);
+      users.insert(1, user2);
+    } else {
+      users.insert(0, user2);
+      users.insert(1, currAppUser);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    print("ChatRoom Screen has received ${user2.userName} as user2 and forwarding the exact same to Create Message");
+    print(
+        "ChatRoom Screen has received ${user2.userName} as user2 and forwarding the exact same to Create Message");
     return Scaffold(
       appBar: AppBar(
         leading: Padding(
           padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),
           child: Container(
-            height: 30, width: 30,
+            height: 30,
+            width: 30,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               image: DecorationImage(
-                  image: NetworkImage(user2.imgUrl),
-                  fit: BoxFit.cover
-              ),
+                  image: NetworkImage(user2.imgUrl), fit: BoxFit.cover),
               color: Colors.deepPurple,
             ),
           ),
         ),
-        title: Text(
-          user2.userName
-        ),
+        title: Text(user2.userName),
       ),
       body: Column(
         children: [
           Expanded(
-            child:
-            Consumer<SingleUserAllConversations>(
-              builder: (context,singleUserAllConversations,child ) {
-                 return
-                  MessagesList(chatRoom: singleUserAllConversations.returnChatRoom(user2.uid),);
-              }
-            ),
+            child: FutureBuilder(
+                future: fillUsersList(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    return Consumer<SingleUserAllConversations>(
+                        builder: (context, singleUserAllConversations, child) {
+                      return MessagesList(
+                        chatRoom:
+                            singleUserAllConversations.returnChatRoom(users),
+                      );
+                    });
+                  }
+                  return Center(child: CircularProgressIndicator());
+                }),
           ),
-          CreateMsg(user2: user2,),
+          CreateMsg(
+            otherUser: user2,
+          ),
         ],
       ),
       // bottomNavigationBar: CreateMsg(),
@@ -58,18 +80,14 @@ class ChatRoomScreen extends StatelessWidget {
 }
 
 class CreateMsg extends StatelessWidget {
-
   final myController = TextEditingController();
-  final AppUser user2;
+  final AppUser otherUser;
 
-  CreateMsg({required this.user2});
-
-
-
+  CreateMsg({required this.otherUser});
 
   @override
   Widget build(BuildContext context) {
-    print("Create Message has received user2 as ${user2.userName}");
+    print("Create Message has received user2 as ${otherUser.userName}");
     return Row(
       children: [
         Expanded(
@@ -80,13 +98,14 @@ class CreateMsg extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: "Type a message",
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(20))
-                ),
+                    borderRadius: BorderRadius.all(Radius.circular(20))),
               ),
             ),
           ),
         ),
-        SizedBox(width: 10,),
+        SizedBox(
+          width: 10,
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(0, 0, 6, 0),
           child: InkWell(
@@ -94,23 +113,37 @@ class CreateMsg extends StatelessWidget {
               Icons.send_rounded,
               size: 35,
             ),
-            onTap: ()async{
+            onTap: () async {
               final currUser = FirebaseAuth.instance.currentUser;
               final DateTime msgDateTime = DateTime.now();
-              if(myController.text != "") {
-                final Message msg = Message(authorId: currUser!.uid,msgDate: msgDateTime,text: myController.text);
-                if (Provider.of<SingleUserAllConversations>(context,listen : false).chatRoomExistOrNot(user2.uid))
-                  {
-                    await Provider.of<SingleUserAllConversations>(context,listen : false).addMessageToChatRoom(
-                      msg,
-                      Provider.of<SingleUserAllConversations>(context,listen : false).returnChatRoom(user2.uid)!
-                    );
-                  }
-                else {
-                  final user1 = await UserDao().returnAppUser(FirebaseAuth.instance.currentUser!.uid);       //sibi             //rehan
-                  print("Using UserDao we create ${user1.userName} as user1");
-                  await Provider.of<SingleUserAllConversations>(context,listen : false).addChatRoom(ChatRoom(user1: user1,user2: user2,messageList: [msg], lastMsg: msg ));
-                  print("Sent ${user2.userName} as user2 and ${user1.userName} as user1 to addChatRoom ");
+              if (myController.text != "") {
+                final Message msg = Message(
+                    authorId: currUser!.uid,
+                    msgDate: msgDateTime,
+                    text: myController.text);
+                final currAppUser = await UserDao().returnAppUser(currUser.uid);
+                List<AppUser> users = [];
+                if (currAppUser.uid.compareTo(otherUser.uid) == -1) {
+                  users = [currAppUser, otherUser];
+                } else {
+                  users = [otherUser, currAppUser];
+                }
+
+//                final docId = "${users[0].uid}-${users[1].uid}";
+
+                if (Provider.of<SingleUserAllConversations>(context, listen: false).chatRoomExistOrNot(users))
+                {
+                  await Provider.of<SingleUserAllConversations>(context,listen: false).
+                  addMessageToChatRoom(
+                          msg,
+                          Provider.of<SingleUserAllConversations>(context,
+                                  listen: false)
+                              .returnChatRoom(users)!);
+                } else {
+                  await Provider.of<SingleUserAllConversations>(context,
+                          listen: false)
+                      .addChatRoom(ChatRoom(
+                          users: users, messageList: [msg], lastMsg: msg));
                 }
                 //TODO : NULL CHECK
                 // final chatRoom = Provider.of<SingleUserAllConversations>(context,listen : false).returnChatRoom(appUser.uid);
@@ -125,4 +158,3 @@ class CreateMsg extends StatelessWidget {
     );
   }
 }
-

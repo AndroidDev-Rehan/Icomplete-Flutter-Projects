@@ -7,20 +7,21 @@ import 'package:my_chat_app/Models/message.dart';
 
 import '../app_user.dart';
 import 'chat_room.dart';
+// import 'package:collection/collection.dart';
 
 class SingleUserAllConversations extends ChangeNotifier{
   List<ChatRoom> allChatRooms = [];
 
 
+  SingleUserAllConversations();
+
 
   fillList() async{
     final currUserId = FirebaseAuth.instance.currentUser!.uid;
+
     //TODO : Order by last message
-    final collection = await FirebaseFirestore.instance.collection('AllChatRooms').doc(currUserId).collection('ChatRooms').get();
-
     final appUser = await UserDao().returnAppUser(currUserId);
-
-   // final collection = await FirebaseFirestore.instance.collection('AllChatRooms').where('users',arrayContains: appUser.toMap()).get();
+    final collection = await FirebaseFirestore.instance.collection('AllChatRooms').where('users',arrayContains: appUser.toMap()).get();
 
     allChatRooms = collection.docs.map(
             (document) => ChatRoom.fromMap(document.data())
@@ -37,57 +38,90 @@ class SingleUserAllConversations extends ChangeNotifier{
 
   addMessageToChatRoom(Message msg, ChatRoom chatRoom) async {
 
-    final tempChatR1 = ChatRoom(user2: chatRoom.user1, user1: chatRoom.user2, messageList: chatRoom.messageList, lastMsg: chatRoom.lastMsg );
+    // Function eq = const ListEquality().equals;
 
     //TODO: add notifyListeners
 
-    final currUserId = FirebaseAuth.instance.currentUser!.uid;
     for (int i = 0; i < allChatRooms.length; i++) {
-      if (allChatRooms[i].user2 == chatRoom.user2) {
+
+      if (compareAppUsersList(allChatRooms[i].users,chatRoom.users))
+
+      {
+        print("Message List of allChatRoom[i]: ");
+        for(int j = 0; j< allChatRooms[i].messageList.length; j++)
+          {
+            print(allChatRooms[i].messageList[j].text);
+          }
+        print("Adding message!");
         allChatRooms[i].messageList.add(msg);
-        final ChatRoom tempChatRoom = allChatRooms[i];
-        tempChatRoom.lastMsg = msg;
+        print("Added Message!");
+        print("Message List :\n");
+        for(int j = 0; j< allChatRooms[i].messageList.length; j++)
+        {
+          print(allChatRooms[i].messageList[j].text);
+        }
+        allChatRooms[i].lastMsg = msg;
+
+        print("setting tempChatRoom equal to allChatRooms[i]");
+        final ChatRoom tempChatRoom = ChatRoom(users: allChatRooms[i].users, messageList: allChatRooms[i].messageList, lastMsg: allChatRooms[i].lastMsg);
+        print("Message List of tempChatROOM");
+        for(int j = 0; j< tempChatRoom.messageList.length; j++)
+        {
+          print(allChatRooms[i].messageList[j].text);
+        }
+        final docId = "${tempChatRoom.users[0].uid}-${tempChatRoom.users[1].uid}";
+
         await FirebaseFirestore.instance
-            .collection('AllUsersConversations')
-            .doc(currUserId)
-            .collection('ChatRooms')
-            .doc(chatRoom.user2.uid)
+            .collection('AllChatRooms')
+            .doc(docId)
             .set(tempChatRoom.toMap());
-
-
-        await FirebaseFirestore.instance
-            .collection('AllUsersConversations')
-            .doc(chatRoom.user2.uid)
-            .collection('ChatRooms')
-            .doc(currUserId)
-            .set(tempChatR1.toMap());
       }
+
     }
   }
 
-  // String docIdGenerator(){
-  //   final currUserId = FirebaseAuth.instance.currentUser!.uid;
-  //   return
-  // }
+  bool compareAppUsersList(List<AppUser> a, List<AppUser> b){
+    if (a.length!=b.length){
+      return false;
+    }
+    else{
+      for(int i=0; i<a.length; i++){
+        if((a[i].userName!=b[i].userName) || (a[i].uid!=b[i].uid) || (a[i].imgUrl!=b[i].imgUrl))
+          {
+            return false;
+          }
+      }
+    }
+    return true;
+  }
 
 
-  //if chatRoom Exists Than add Message to ChatRoom and return true else return false
-  bool chatRoomExistOrNot (String chatRoomId){
+//  if chatRoom Exists Than add Message to ChatRoom and return true else return false
+  bool chatRoomExistOrNot (List<AppUser> users){
+
+//    Function eq = const ListEquality().equals;
+
+    print("List of Users Recieved are:");
+    for (int i = 0;i < users.length; i++)
+      print("$i : ${users[i].userName}");
+
     for (int i=0; i<allChatRooms.length;i++)
     {
-      if(allChatRooms[i].user2.uid==chatRoomId)
+      if(compareAppUsersList(allChatRooms[i].users,users))
       {
         return true;
       }
     }
+    print("\n\nNo CHAT ROOM MATCHED!!");
     return false;
   }
 
-  ChatRoom? returnChatRoom (String chatRoomId)
+  ChatRoom? returnChatRoom (List<AppUser> users)
   {
+//    Function eq = const ListEquality().equals;
     for (int i=0; i<allChatRooms.length;i++)
       {
-        if(allChatRooms[i].user2.uid==chatRoomId)
+        if(compareAppUsersList(allChatRooms[i].users,users))
           {
             return allChatRooms[i];
           }
@@ -95,15 +129,10 @@ class SingleUserAllConversations extends ChangeNotifier{
   }
 
   addChatRoom(ChatRoom chatRoom) async{
-     final oppositeChatRoom = ChatRoom(lastMsg: chatRoom.lastMsg,messageList: chatRoom.messageList,user1: chatRoom.user1,user2: chatRoom.user2);
-     final temp = oppositeChatRoom.user2; //rehan
-     oppositeChatRoom.user2 = oppositeChatRoom.user1; //sibi
-     oppositeChatRoom.user1 = temp;                   //rehan
-     final currUserId = FirebaseAuth.instance.currentUser!.uid;
-     // allChatRooms.insert(0, chatRoom);
-    await FirebaseFirestore.instance.collection('AllUsersConversations').doc(currUserId).collection('ChatRooms').doc(chatRoom.user2.uid).set(chatRoom.toMap());
-    await FirebaseFirestore.instance.collection('AllUsersConversations').doc(chatRoom.user2.uid).collection('ChatRooms').doc(currUserId).set(oppositeChatRoom.toMap());
-     print("chatRoom.user2.uid is ${chatRoom.user2.uid}");
+    final docId = "${chatRoom.users[0].uid}-${chatRoom.users[1].uid}";
+    allChatRooms.insert(0, chatRoom);
+    print("Adding New Chat Room!!!");
+    await FirebaseFirestore.instance.collection('AllChatRooms').doc(docId).set(chatRoom.toMap());
   }
 
 

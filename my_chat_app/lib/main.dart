@@ -3,16 +3,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:my_chat_app/ListBuilders/list_builder_chat_heads.dart';
-import 'package:my_chat_app/ListBuilders/list_builder_messages.dart';
+// import 'package:my_chat_app/ListBuilders/list_builder_chat_heads.dart';
+// import 'package:my_chat_app/ListBuilders/list_builder_messages.dart';
 import 'package:my_chat_app/Models/Daos/single_user_all_convos.dart';
-import 'package:my_chat_app/Widgets/single_message.dart';
+//import 'package:my_chat_app/Widgets/single_message.dart';
 import 'package:my_chat_app/screens/coversation_list_screen.dart';
 import 'package:my_chat_app/screens/home_screen.dart';
-import 'package:my_chat_app/utils/routes.dart';
+//import 'package:my_chat_app/utils/routes.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+
+import 'Models/Daos/user_dao.dart';
 
 void main() async{
 
@@ -20,14 +22,26 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  final suac = await SingleUserAllConversations.create();
+  late final SingleUserAllConversations suac;
+  final currUser = FirebaseAuth.instance.currentUser;
 
-  runApp(
-    ChangeNotifierProvider<SingleUserAllConversations>.value(
-      value: suac,
-      child: MyApp(),
-    )
-  );
+  if(currUser==null){
+    suac = SingleUserAllConversations();
+  }
+  else {
+    bool userExist = await UserDao().userExistOrNot(FirebaseAuth.instance.currentUser!.uid);
+    if(!userExist) {
+      suac = SingleUserAllConversations();
+    }
+    else{
+      suac = await SingleUserAllConversations.create();
+    }
+  }
+
+  runApp(ChangeNotifierProvider<SingleUserAllConversations>.value(
+    value: suac,
+    child: MyApp(),
+  ));
 
 
 }
@@ -36,7 +50,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
 
   Future<bool> checkLoggedInStatus() async{
-    final db = FirebaseFirestore.instance;
+//    final db = FirebaseFirestore.instance;
     final User? currUser = FirebaseAuth.instance.currentUser;
     if(currUser==null) {
       return false;

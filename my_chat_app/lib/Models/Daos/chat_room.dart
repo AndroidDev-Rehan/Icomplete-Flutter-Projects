@@ -10,15 +10,13 @@ import '../message.dart';
 class ChatRoom{
 
 
-  // List<AppUser> users;
-  AppUser user1;
-  AppUser user2;
+  List<AppUser> users;
   Message? lastMsg;
   List<Message> messageList;
 
 
 
-  ChatRoom({required this.user1,required this.user2,required this.messageList,required this.lastMsg});
+  ChatRoom({required this.users,required this.messageList,required this.lastMsg});
 
   List<Message> get getMessageList{
     return messageList;
@@ -26,10 +24,7 @@ class ChatRoom{
 
   factory ChatRoom.fromMap(Map<String,dynamic> map){
     return ChatRoom(
-
-//        users: List<AppUser>.generate(map['users'.length], (index) => AppUser.fromMap(map[index])),
-        user1: AppUser.fromMap(map['user1']),
-        user2: AppUser.fromMap(map['user2']),
+        users:       List<AppUser>.generate(map['users'].length, (index) => AppUser.fromMap(map["users"][index])),
         messageList: List<Message>.generate(map['messageList'].length, (index) => Message.fromMap(map['messageList'][index]) ),
         lastMsg: Message.fromMap(map['lastMsg'])
     );
@@ -37,8 +32,7 @@ class ChatRoom{
 
   Map<String,dynamic> toMap(){
     return {
-      'user1' : user1.toMap(),
-      'user2' : user2.toMap(),
+      'users' : List.generate(users.length, (index) => users[index].toMap()),
       //TODO, NULL CHECK
       'lastMsg'     : (lastMsg==null)? lastMsg : lastMsg!.toMap(),
       'messageList' : messageList.map((msg) => msg.toMap()).toList()
