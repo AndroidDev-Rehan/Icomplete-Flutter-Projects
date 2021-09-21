@@ -14,6 +14,14 @@ class ChatRoomScreen extends StatelessWidget {
 
   ChatRoomScreen({required this.user2});
 
+  String docIdGenerator(){
+    final currUserId = FirebaseAuth.instance.currentUser!.uid;
+    if(currUserId.compareTo(user2.uid)==-1){
+      return "$currUserId-${user2.uid}";
+    }
+    return "${user2.uid}-$currUserId";
+  }
+
   final List<AppUser> users = [];
 
   Future<void> fillUsersList() async {
@@ -58,13 +66,11 @@ class ChatRoomScreen extends StatelessWidget {
                 future: fillUsersList(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
-                    return Consumer<SingleUserAllConversations>(
-                        builder: (context, singleUserAllConversations, child) {
-                      return MessagesList(
-                        chatRoom:
-                            singleUserAllConversations.returnChatRoom(users),
+                    return
+                        MessagesList(
+                        // chatRoom: singleUserAllConversations.returnChatRoom(users),
+                          chatRoomDocSS: FirebaseFirestore.instance.collection('AllChatRooms').doc(docIdGenerator()).snapshots(),
                       );
-                    });
                   }
                   return Center(child: CircularProgressIndicator());
                 }),
@@ -84,6 +90,16 @@ class CreateMsg extends StatelessWidget {
   final AppUser otherUser;
 
   CreateMsg({required this.otherUser});
+
+
+  String docIdGenerator(){
+    final currUserId = FirebaseAuth.instance.currentUser!.uid;
+    if(currUserId.compareTo(otherUser.uid)==-1){
+      return "$currUserId-${otherUser.uid}";
+    }
+    return "${otherUser.uid}-$currUserId";
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -117,9 +133,10 @@ class CreateMsg extends StatelessWidget {
               final currUser = FirebaseAuth.instance.currentUser;
               final DateTime msgDateTime = DateTime.now();
               if (myController.text != "") {
+
                 final Message msg = Message(
                     authorId: currUser!.uid,
-                    msgDate: msgDateTime,
+                    msgDateTimeInMilis: msgDateTime.millisecondsSinceEpoch,
                     text: myController.text);
                 final currAppUser = await UserDao().returnAppUser(currUser.uid);
                 List<AppUser> users = [];
@@ -129,25 +146,7 @@ class CreateMsg extends StatelessWidget {
                   users = [otherUser, currAppUser];
                 }
 
-//                final docId = "${users[0].uid}-${users[1].uid}";
-
-                if (Provider.of<SingleUserAllConversations>(context, listen: false).chatRoomExistOrNot(users))
-                {
-                  await Provider.of<SingleUserAllConversations>(context,listen: false).
-                  addMessageToChatRoom(
-                          msg,
-                          Provider.of<SingleUserAllConversations>(context,
-                                  listen: false)
-                              .returnChatRoom(users)!);
-                } else {
-                  await Provider.of<SingleUserAllConversations>(context,
-                          listen: false)
-                      .addChatRoom(ChatRoom(
-                          users: users, messageList: [msg], lastMsg: msg));
-                }
-                //TODO : NULL CHECK
-                // final chatRoom = Provider.of<SingleUserAllConversations>(context,listen : false).returnChatRoom(appUser.uid);
-                // Provider.of<SingleUserAllConversations>(context,listen : false).addMessageToChatRoom(msg, chatRoom );
+                SingleUserAllConversations().addMessageToChatRoom(msg, docIdGenerator(), users);
 
                 myController.text = "";
               }
@@ -158,3 +157,22 @@ class CreateMsg extends StatelessWidget {
     );
   }
 }
+
+//                final docId = "${users[0].uid}-${users[1].uid}";
+
+// if (Provider.of<SingleUserAllConversations>(context, listen: false).chatRoomExistOrNot(users))
+// {
+//   await Provider.of<SingleUserAllConversations>(context,listen: false).
+//   addMessageToChatRoom(
+//           msg,
+//           Provider.of<SingleUserAllConversations>(context,
+//                   listen: false)
+//               .returnChatRoom(users)!);
+// } else {
+//   await Provider.of<SingleUserAllConversations>(context,
+//           listen: false)
+//       .addChatRoom(ChatRoom(
+//           users: users, messageList: [msg], lastMsg: msg, lastMsgDateTimeMilis:  msg.msgDateTimeInMilis));
+// }
+// final chatRoom = Provider.of<SingleUserAllConversations>(context,listen : false).returnChatRoom(appUser.uid);
+// Provider.of<SingleUserAllConversations>(context,listen : false).addMessageToChatRoom(msg, chatRoom );

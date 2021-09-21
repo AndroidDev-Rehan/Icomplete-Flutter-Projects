@@ -35,7 +35,7 @@ class _UserInfoDetailsState extends State<UserInfoDetails> {
         final imgUrl = await uploadImageToFirebaseAndReturnUrl(context);
         AppUser appUser = AppUser(userName: uName, uid: FirebaseAuth.instance.currentUser!.uid, imgUrl: imgUrl);
         await UserDao().insertUser(appUser);
-        await Provider.of<SingleUserAllConversations>(context,listen: false).fillList();
+//        await Provider.of<SingleUserAllConversations>(context,listen: false).fillList();
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => ConversationsListScreen(

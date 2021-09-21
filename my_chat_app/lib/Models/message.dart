@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 
 class Message{
   final String text;
-  final DateTime msgDate;
+  final int msgDateTimeInMilis;
   final String authorId;
 
-  Message({required this.text, required this.msgDate,required this.authorId});
+  Message({required this.text, required this.msgDateTimeInMilis,required this.authorId});
 
   Map<String,dynamic> toMap(){
     return {
       'text' : text,
       //TODO msgDate.toString
-      'msgDate' : msgDate.toString(),
+      'msgDateTimeInMilis' : msgDateTimeInMilis,
       'authorId' : authorId
     };
   }
@@ -21,7 +21,7 @@ class Message{
   factory Message.fromMap(Map<String,dynamic> map){
     return Message(
         text: map['text'],
-        msgDate: DateTime.parse(map['msgDate']),
+        msgDateTimeInMilis: map['msgDateTimeInMilis'],
         authorId: map['authorId']
     );
   }

@@ -22,26 +22,28 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  late final SingleUserAllConversations suac;
-  final currUser = FirebaseAuth.instance.currentUser;
+  // late final SingleUserAllConversations suac;
+  // final currUser = FirebaseAuth.instance.currentUser;
+  //
+  // if(currUser==null){
+  //   suac = SingleUserAllConversations();
+  // }
+  // else {
+  //   bool userExist = await UserDao().userExistOrNot(FirebaseAuth.instance.currentUser!.uid);
+  //   if(!userExist) {
+  //     suac = SingleUserAllConversations();
+  //   }
+  //   else{
+  //     suac = await SingleUserAllConversations.create();
+  //   }
+  // }
+  //
+  // runApp(ChangeNotifierProvider<SingleUserAllConversations>.value(
+  //   value: suac,
+  //   child: MyApp(),
+  // ));
 
-  if(currUser==null){
-    suac = SingleUserAllConversations();
-  }
-  else {
-    bool userExist = await UserDao().userExistOrNot(FirebaseAuth.instance.currentUser!.uid);
-    if(!userExist) {
-      suac = SingleUserAllConversations();
-    }
-    else{
-      suac = await SingleUserAllConversations.create();
-    }
-  }
-
-  runApp(ChangeNotifierProvider<SingleUserAllConversations>.value(
-    value: suac,
-    child: MyApp(),
-  ));
+  runApp(MyApp());
 
 
 }

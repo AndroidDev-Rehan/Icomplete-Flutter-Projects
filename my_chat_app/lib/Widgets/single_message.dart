@@ -7,7 +7,6 @@ class SingleMessage extends StatelessWidget {
 
   final Message msg;
   SingleMessage({required this.msg});
-//  Message(text: "How are you, Whats going On. Its just random text. no need to worry. Hmmmmmmmmmm", msgDate: DateTime.now(),authorId: 'FirebaseAuth.instance.currentUser!.uid');
 
   bool ownMsg(){
     if (msg.authorId==FirebaseAuth.instance.currentUser!.uid)
@@ -48,7 +47,7 @@ class SingleMessage extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(4),
                   child: Text(
-                    DateFormat.jm().format(msg.msgDate),
+                    DateFormat.jm().format(DateTime.fromMillisecondsSinceEpoch(msg.msgDateTimeInMilis)),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 13,

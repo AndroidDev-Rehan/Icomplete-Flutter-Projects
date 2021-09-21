@@ -13,10 +13,11 @@ class ChatRoom{
   List<AppUser> users;
   Message? lastMsg;
   List<Message> messageList;
+  int lastMsgDateTimeMilis;
 
 
 
-  ChatRoom({required this.users,required this.messageList,required this.lastMsg});
+  ChatRoom({required this.users,required this.messageList,required this.lastMsg,required this.lastMsgDateTimeMilis});
 
   List<Message> get getMessageList{
     return messageList;
@@ -26,7 +27,8 @@ class ChatRoom{
     return ChatRoom(
         users:       List<AppUser>.generate(map['users'].length, (index) => AppUser.fromMap(map["users"][index])),
         messageList: List<Message>.generate(map['messageList'].length, (index) => Message.fromMap(map['messageList'][index]) ),
-        lastMsg: Message.fromMap(map['lastMsg'])
+        lastMsg: Message.fromMap(map['lastMsg']),
+      lastMsgDateTimeMilis: map['lastMsgDateTimeMilis'],
     );
   }
 
@@ -35,7 +37,8 @@ class ChatRoom{
       'users' : List.generate(users.length, (index) => users[index].toMap()),
       //TODO, NULL CHECK
       'lastMsg'     : (lastMsg==null)? lastMsg : lastMsg!.toMap(),
-      'messageList' : messageList.map((msg) => msg.toMap()).toList()
+      'messageList' : messageList.map((msg) => msg.toMap()).toList(),
+      'lastMsgDateTimeMilis' : lastMsgDateTimeMilis
     };
   }
 
